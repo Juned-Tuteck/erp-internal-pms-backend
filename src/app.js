@@ -2,16 +2,16 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 
-const projectRoutes = require('./routes/project.routes');
+const projectRoutes = require('./routes');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.APP_PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use('/api/projects', projectRoutes);
+app.use('/api', projectRoutes);
 
 app.get('/health', (req, res) => {
   res.status(200).json({
@@ -47,7 +47,7 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
   console.log(`🚀 Server is running on port ${PORT}`);
   console.log(`📍 Health check: http://localhost:${PORT}/health`);
-  console.log(`📍 API endpoint: http://localhost:${PORT}/api/projects`);
+  console.log(`📍 API endpoint: http://localhost:${PORT}/api`);
 });
 
 module.exports = app;

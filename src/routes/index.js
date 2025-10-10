@@ -1,5 +1,5 @@
 const express = require('express');
-const projectModule = require('../modules/project.module');
+const projectModule = require('../modules/t_project');
 
 const router = express.Router();
 
