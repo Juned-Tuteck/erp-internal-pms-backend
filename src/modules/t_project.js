@@ -1,56 +1,168 @@
 const pool = require('../config/database');
 
 const projectModule = {
+  // async getAllProjects() {
+  //   try {
+  //     const query = `
+  //       SELECT
+  //         p.id,
+  //         p.project_number,
+  //         p.name AS project_name,
+  //         p.lead_id,
+  //         l.lead_number AS lead_number,
+  //         l.customer_id AS lead_customer_id,
+  //         c.business_name AS customer_name,
+  //         p.project_type,
+  //         p.created_at,
+  //         p.lead_id AS project_manager,
+  //         p.estimated_start AS est_start_date,
+  //         p.estimated_end AS est_end_date,
+  //         p.kick_off AS kick_off_date,
+  //         p.updated_at AS last_updated,
+  //         p.estimated_price AS est_price,
+  //         p.project_status AS status,
+  //         p.warehouse_id,
+  //         p.project_species,
+  //         p.actual_start,
+  //         p.actual_end,
+  //         p.price_customer,
+  //         p.actual_price,
+  //         p.comment_baseline,
+  //         p.comment_other,
+  //         p.project_template_id,
+  //         p.location,
+  //         p.project_address,
+  //         p.is_insured,
+  //         p.insurance_no,
+  //         p.insurance_from_date,
+  //         p.insurance_to_date,
+  //         p.approval_status,
+  //         p.approval_comment,
+  //         p.approved_by,
+  //         p.approved_on,
+  //         p.completion,
+  //         p.created_by,
+  //         p.updated_by,
+  //         p.is_active,
+  //         p.is_deleted
+  //       FROM pms.t_project p
+  //       LEFT JOIN crm.t_lead l ON p.lead_id = l.lead_id
+  //       LEFT JOIN crm.t_customer c ON l.customer_id = c.customer_id
+  //       WHERE p.is_deleted = false
+  //       ORDER BY p.created_at DESC
+  //     `;
+
+  //     const result = await pool.query(query);
+  //     return {
+  //       success: true,
+  //       statusCode: 200,
+  //       data: result.rows,
+  //       clientMessage: 'Projects fetched successfully',
+  //       devMessage: 'Query executed successfully'
+  //     };
+  //   } catch (error) {
+  //     console.error('Error fetching all projects:', error);
+  //     return {
+  //       success: false,
+  //       statusCode: 500,
+  //       data: null,
+  //       clientMessage: 'Failed to fetch projects',
+  //       devMessage: error.message
+  //     };
+  //   }
+  // },
   async getAllProjects() {
     try {
       const query = `
-        SELECT
-          p.id,
-          p.project_number,
-          p.name AS project_name,
-          p.lead_id,
-          l.lead_number AS lead_number,
-          l.customer_id AS lead_customer_id,
-          c.business_name AS customer_name,
-          p.project_type,
-          p.created_at,
-          p.lead_id AS project_manager,
-          p.estimated_start AS est_start_date,
-          p.estimated_end AS est_end_date,
-          p.kick_off AS kick_off_date,
-          p.updated_at AS last_updated,
-          p.estimated_price AS est_price,
-          p.project_status AS status,
-          p.warehouse_id,
-          p.project_species,
-          p.actual_start,
-          p.actual_end,
-          p.price_customer,
-          p.actual_price,
-          p.comment_baseline,
-          p.comment_other,
-          p.project_template_id,
-          p.location,
-          p.project_address,
-          p.is_insured,
-          p.insurance_no,
-          p.insurance_from_date,
-          p.insurance_to_date,
-          p.approval_status,
-          p.approval_comment,
-          p.approved_by,
-          p.approved_on,
-          p.completion,
-          p.created_by,
-          p.updated_by,
-          p.is_active,
-          p.is_deleted
-        FROM pms.t_project p
-        LEFT JOIN crm.t_lead l ON p.lead_id = l.lead_id
-        LEFT JOIN crm.t_customer c ON l.customer_id = c.customer_id
-        WHERE p.is_deleted = false
-        ORDER BY p.created_at DESC
-      `;
+      SELECT
+        p.id,
+        p.project_number,
+        p.name AS project_name,
+        p.lead_id,
+        l.lead_number AS lead_number,
+        -- lead details as json
+        json_build_object(
+          'lead_id', l.lead_id,
+          'lead_number', l.lead_number,
+          'business_name', l.business_name,
+          'lead_stage', l.lead_stage,
+          'project_name', l.project_name,
+          'project_value', l.project_value,
+          'contact_person', l.contact_person,
+          'contact_no', l.contact_no
+        ) AS lead,
+
+        -- customer details as json (nullable)
+        json_build_object(
+          'customer_id', c.customer_id,
+          'business_name', c.business_name,
+          'branch_name', cb.branch_name,
+          'contact_number', cb.contact_number,
+          'email', cb.email_id
+        ) AS customer,
+
+        p.project_type,
+        p.created_at,
+        p.lead_id AS project_manager,
+        p.estimated_start AS est_start_date,
+        p.estimated_end AS est_end_date,
+        p.kick_off AS kick_off_date,
+        p.updated_at AS last_updated,
+        p.estimated_price AS est_price,
+        p.project_status AS status,
+        p.warehouse_id,
+        p.project_species,
+        p.actual_start,
+        p.actual_end,
+        p.price_customer,
+        p.actual_price,
+        p.comment_baseline,
+        p.comment_other,
+        p.project_template_id,
+        p.location,
+        p.project_address,
+        p.is_insured,
+        p.insurance_no,
+        p.insurance_from_date,
+        p.insurance_to_date,
+        p.approval_status,
+        p.approval_comment,
+        p.approved_by,
+        p.approved_on,
+        p.completion,
+        p.created_by,
+        p.updated_by,
+        p.is_active,
+        p.is_deleted,
+
+        -- latest BOM for this project's lead (nullable) as json
+        json_build_object(
+          'bom_id', tb_latest.id,
+          'bom_number', tb_latest.bom_number,
+          'total_price', tb_latest.total_price,
+          'approval_status', tb_latest.approval_status,
+          'created_at', tb_latest.created_at
+        ) AS latest_bom
+
+      FROM pms.t_project p
+      LEFT JOIN crm.t_lead l ON p.lead_id = l.lead_id
+      LEFT JOIN crm.t_customer c ON l.customer_id = c.customer_id
+      -- optional: get customer branch if you use branch-level info (nullable)
+      LEFT JOIN crm.t_customer_branch cb ON cb.id = l.customer_branch_id
+
+      -- lateral join to pick the latest BOM for this lead (if any)
+      LEFT JOIN LATERAL (
+        SELECT tb1.*
+        FROM crm.t_bom tb1
+        WHERE tb1.lead_id = p.lead_id
+          AND (tb1.is_deleted IS DISTINCT FROM true)
+        ORDER BY tb1.created_at DESC
+        LIMIT 1
+      ) tb_latest ON true
+
+      WHERE p.is_deleted = false
+      ORDER BY p.created_at DESC
+    `;
 
       const result = await pool.query(query);
       return {
@@ -71,6 +183,7 @@ const projectModule = {
       };
     }
   },
+
 
   async getProjectById(id) {
     try {
